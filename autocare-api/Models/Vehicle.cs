@@ -14,6 +14,7 @@ namespace autocare_api.Models
         public string Manufacturer { get; set; } = "";
         public int Year { get; set; }
         public int CurrentMileage { get; set; }
+        public string Image { get; set; } = "";
 
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 

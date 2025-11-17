@@ -1,0 +1,17 @@
+﻿# Ignore sensitive configuration
+appsettings.json
+appsettings.Development.json
+appsettings.Production.json
+appsettings.*.json
+
+# Build output
+bin/
+obj/
+
+# User-specific files
+.vs/
+*.user
+*.rsuser
+
+# Publish output
+publish/
