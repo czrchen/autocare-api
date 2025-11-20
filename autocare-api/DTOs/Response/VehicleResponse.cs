@@ -8,6 +8,8 @@
         public int Year { get; set; }
         public string PlateNumber { get; set; } = "";
         public int CurrentMileage { get; set; } = 0;
+        public string Color { get; set; } = "";
+        public string PurchaseDate { get; set; } = "";
 
         public string Image { get; set; } = "";
     }

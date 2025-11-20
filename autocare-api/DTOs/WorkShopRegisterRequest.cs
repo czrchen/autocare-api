@@ -1,4 +1,6 @@
-﻿namespace autocare_api.DTOs
+﻿using autocare_api.Models;
+
+namespace autocare_api.DTOs
 {
     public class WorkshopRegisterRequest
     {
@@ -8,7 +10,7 @@
 
         public string WorkshopName { get; set; } = "";
         public string OwnerName { get; set; } = "";
-        public string Address { get; set; } = "";
-        public string OperatingHours { get; set; } = "";
+        public AddressObject Address { get; set; } = new AddressObject();
+        public WeeklyOperatingHours OperatingHours { get; set; } = new WeeklyOperatingHours();
     }
 }

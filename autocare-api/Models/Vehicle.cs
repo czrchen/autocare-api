@@ -15,9 +15,10 @@ namespace autocare_api.Models
         public int Year { get; set; }
         public int CurrentMileage { get; set; }
         public string Image { get; set; } = "";
+        public string Color { get; set; } = "";
+        public DateTime PurchaseDate { get; set; }
 
-        public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
-
+        public DateTime CreatedAt { get; set; }
         public User? User { get; set; }
         public ICollection<ServiceRecord>? ServiceRecords { get; set; }
     }

@@ -23,10 +23,31 @@ namespace autocare_api.Controllers
         {
             try
             {
-                // Check user exists (by Email)
+                // Validate required fields
+                if (string.IsNullOrEmpty(request.Email))
+                    return BadRequest(new { error = "Email is required" });
+
+                if (string.IsNullOrEmpty(request.PurchaseDate))
+                    return BadRequest(new { error = "Purchase date is required" });
+
+                // Check user exists
                 var user = await _db.Users.FirstOrDefaultAsync(x => x.Email == request.Email);
                 if (user == null)
                     return BadRequest(new { error = "User not found" });
+
+                // First, parse the date string
+                DateTime purchaseDate;
+                if (!DateTime.TryParseExact(
+                    request.PurchaseDate,
+                    "yyyy-MM-dd",
+                    System.Globalization.CultureInfo.InvariantCulture,
+                    System.Globalization.DateTimeStyles.None,
+                    out purchaseDate))
+                {
+                    return BadRequest(new { error = "Invalid purchase date format" });
+                }
+
+                purchaseDate = DateTime.SpecifyKind(purchaseDate, DateTimeKind.Utc);
 
                 // Create vehicle
                 var vehicle = new Vehicle
@@ -39,12 +60,15 @@ namespace autocare_api.Controllers
                     PlateNumber = request.Plate,
                     CurrentMileage = request.Mileage,
                     Image = request.Image,
+                    Color = request.Color,
+                    PurchaseDate = purchaseDate,
+                    CreatedAt = DateTime.UtcNow
                 };
 
                 _db.Vehicles.Add(vehicle);
                 await _db.SaveChangesAsync();
 
-                // Prepare clean DTO response
+                // Prepare response
                 var response = new VehicleResponse
                 {
                     Id = vehicle.Id,
@@ -53,7 +77,9 @@ namespace autocare_api.Controllers
                     Year = vehicle.Year,
                     PlateNumber = vehicle.PlateNumber,
                     CurrentMileage = vehicle.CurrentMileage,
-                    Image = vehicle.Image
+                    Image = vehicle.Image,
+                    Color = vehicle.Color,
+                    PurchaseDate = vehicle.PurchaseDate.ToString("yyyy-MM-dd"),
                 };
 
                 return Ok(new
@@ -62,9 +88,23 @@ namespace autocare_api.Controllers
                     vehicle = response
                 });
             }
+            catch (DbUpdateException dbEx)
+            {
+                Console.WriteLine("DATABASE ERROR:");
+                Console.WriteLine(dbEx.InnerException?.Message); // <-- add this
+                Console.WriteLine(dbEx.Message);
+
+                return StatusCode(500, new
+                {
+                    error = "Database error",
+                    details = dbEx.InnerException?.Message ?? dbEx.Message
+                });
+            }
             catch (Exception ex)
             {
-                return StatusCode(500, new { error = ex.Message });
+                // Log the full exception for debugging
+                Console.WriteLine($"Error creating vehicle: {ex}");
+                return StatusCode(500, new { error = "Internal server error", details = ex.Message });
             }
         }
 
@@ -85,7 +125,9 @@ namespace autocare_api.Controllers
                     Year = v.Year,
                     PlateNumber = v.PlateNumber,
                     CurrentMileage = v.CurrentMileage,
-                    Image = v.Image
+                    Image = v.Image, 
+                    Color = v.Color,
+                    PurchaseDate = v.PurchaseDate.ToString("yyyy-MM-dd"),
                 })
                 .ToListAsync();
 

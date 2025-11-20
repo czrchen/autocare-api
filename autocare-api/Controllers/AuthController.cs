@@ -88,6 +88,15 @@ namespace autocare_api.Controllers
         [HttpPost("register-workshop")]
         public async Task<IActionResult> RegisterWorkshop(WorkshopRegisterRequest request)
         {
+
+            Console.WriteLine("=== REQUEST DEBUG ===");
+            Console.WriteLine($"OperatingHours is null? {request.OperatingHours == null}");
+            Console.WriteLine($"OperatingHours :  {request.OperatingHours}");
+            Console.WriteLine($"HoursByDay is null? {request.OperatingHours?.HoursByDay == null}");
+            Console.WriteLine($"HoursByDay Count: {request.OperatingHours?.HoursByDay?.Count ?? 0}");
+
+            var serialized = System.Text.Json.JsonSerializer.Serialize(request.OperatingHours);
+            Console.WriteLine($"Received OperatingHours JSON: {serialized}");
             // 1. Check if email already exists
             var existing = await _db.Users.FirstOrDefaultAsync(x => x.Email == request.Email);
             if (existing != null)

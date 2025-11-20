@@ -9,5 +9,8 @@
         public int Mileage { get; set; } = 0;
         public string Email { get; set; } = "";
         public string Image { get; set; } = "";
+
+        public string Color { get; set; } = "";
+        public string PurchaseDate { get; set; } = "";
     }
 }

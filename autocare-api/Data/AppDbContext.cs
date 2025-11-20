@@ -18,9 +18,17 @@ namespace autocare_api.Data
         public DbSet<InvoiceImage> InvoiceImages { get; set; }
         public DbSet<WorkshopProfile> WorkshopProfiles { get; set; }
 
+        public DbSet<Service> Services { get; set; }
+
         protected override void OnModelCreating(ModelBuilder builder)
         {
             base.OnModelCreating(builder);
+
+            // Add this at the top of your OnModelCreating method
+            var jsonOptions = new System.Text.Json.JsonSerializerOptions
+            {
+                PropertyNameCaseInsensitive = true
+            };
 
             // -------------------------
             // Users
@@ -64,9 +72,9 @@ namespace autocare_api.Data
                 .OnDelete(DeleteBehavior.Cascade);
 
             builder.Entity<ServiceRecord>()
-                .HasOne(sr => sr.Workshop)
-                .WithMany()    // Workshop doesn't need list of all records
-                .HasForeignKey(sr => sr.WorkshopId)
+                .HasOne(sr => sr.WorkshopProfile)
+                .WithMany() // optional: you can change to WithMany(wp => wp.ServiceRecords)
+                .HasForeignKey(sr => sr.WorkshopProfileId)
                 .OnDelete(DeleteBehavior.Restrict);
 
             builder.Entity<ServiceRecord>()
@@ -141,6 +149,49 @@ namespace autocare_api.Data
             builder.Entity<WorkshopProfile>()
                 .Property(wp => wp.WorkshopName)
                 .HasMaxLength(100);
+
+            //builder.Entity<WorkshopProfile>()
+            //    .OwnsOne(wp => wp.OperatingHours, oh =>
+            //    {
+            //        oh.OwnsMany(o => o.HoursByDay, dh =>
+            //        {
+            //            dh.Property(p => p.Day);
+            //            dh.Property(p => p.IsOpen);
+            //            dh.Property(p => p.StartTime);
+            //            dh.Property(p => p.EndTime);
+            //        });
+            //    })
+            //    .Navigation(wp => wp.OperatingHours)
+            //    .IsRequired(false);
+
+            // Then update OperatingHours configuration to use these options:
+            builder.Entity<WorkshopProfile>()
+                .Property(wp => wp.OperatingHours)
+                .HasConversion(
+                    v => System.Text.Json.JsonSerializer.Serialize(v, jsonOptions),
+                    v => System.Text.Json.JsonSerializer.Deserialize<WeeklyOperatingHours>(v, jsonOptions)
+                         ?? new WeeklyOperatingHours()
+                )
+                .HasColumnType("jsonb");
+
+            // Also update Address to be consistent:
+            builder.Entity<WorkshopProfile>()
+                .Property(wp => wp.Address)
+                .HasConversion(
+                    v => System.Text.Json.JsonSerializer.Serialize(v, jsonOptions),
+                    v => System.Text.Json.JsonSerializer.Deserialize<AddressObject>(v, jsonOptions)
+                         ?? new AddressObject()
+                )
+                .HasColumnType("jsonb");
+
+            builder.Entity<Service>()
+                .HasKey(s => s.Id);
+
+            builder.Entity<Service>()
+                .HasOne(s => s.WorkshopProfile)
+                .WithMany(wp => wp.Services)
+                .HasForeignKey(s => s.WorkshopProfileId)
+                .OnDelete(DeleteBehavior.Cascade);
         }
     }
 }
