@@ -5,6 +5,7 @@
         public Guid VehicleId { get; set; }
         public Guid WorkshopProfileId { get; set; }
         public Guid ServiceId { get; set; }
+        public Guid UserId { get; set; }
 
         public DateTime ServiceDate { get; set; }
         public int ServiceMileage { get; set; }

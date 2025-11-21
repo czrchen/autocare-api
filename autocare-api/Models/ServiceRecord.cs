@@ -5,7 +5,8 @@ namespace autocare_api.Models
     public class ServiceRecord
     {
         public Guid Id { get; set; }
-
+        public Guid UserId { get; set; }
+        public User User { get; set; }
         public Guid VehicleId { get; set; }
 
         // CHANGE: Link to WorkshopProfile

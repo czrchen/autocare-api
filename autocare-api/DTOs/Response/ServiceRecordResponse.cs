@@ -12,6 +12,7 @@
         public string UserEmail { get; set; } = "";
         public string UserPhone { get; set; } = "";
         public string VehicleName { get; set; } = "";
+        public string VehiclePlate { get; set; }
         public string WorkshopName { get; set; } = "";
         public string ServiceName { get; set; } = "";
 

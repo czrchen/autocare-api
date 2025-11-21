@@ -1,12 +1,9 @@
 ﻿using autocare_api.Data;
 using autocare_api.DTOs;
 using autocare_api.Models;
-using Microsoft.AspNetCore.Identity.Data;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using System.Security.Cryptography;
 using autocare_api.DTOs.Response;
-using System.Text;
 
 namespace autocare_api.Controllers
 {
@@ -38,11 +35,12 @@ namespace autocare_api.Controllers
                 VehicleId = request.VehicleId,
                 WorkshopProfileId = request.WorkshopProfileId,
                 ServiceId = request.ServiceId,
+                UserId = request.UserId,
                 ServiceDate = DateTime.SpecifyKind(request.ServiceDate, DateTimeKind.Utc),
                 ServiceMileage = request.ServiceMileage,
                 Remarks = request.Remarks,
                 Status = request.Status,
-                ServiceItems = new List<ServiceItem>()  // empty for now
+                ServiceItems = new List<ServiceItem>()
             };
 
             _db.ServiceRecords.Add(record);
@@ -72,6 +70,7 @@ namespace autocare_api.Controllers
                     UserPhone = r.Vehicle.User.Phone,
 
                     VehicleName = r.Vehicle.Manufacturer + " " + r.Vehicle.Model,
+                    VehiclePlate = r.Vehicle.PlateNumber,
                     WorkshopName = r.WorkshopProfile.WorkshopName,
                     ServiceName = r.Service.Name,
 
@@ -82,24 +81,20 @@ namespace autocare_api.Controllers
                 })
                 .ToListAsync();
 
-            // Load Vehicle → User mapping
             var vehicles = await _db.Vehicles
                 .Select(v => new { v.Id, v.UserId })
                 .ToListAsync();
 
             var vehicleToUser = vehicles.ToDictionary(x => x.Id, x => x.UserId);
 
-            // GROUP BY USER
             var byUser = records
                 .GroupBy(r => vehicleToUser[r.VehicleId])
                 .ToDictionary(g => g.Key.ToString(), g => g.ToList());
 
-            // GROUP BY WORKSHOP
             var byWorkshop = records
                 .GroupBy(r => r.WorkshopId)
                 .ToDictionary(g => g.Key.ToString(), g => g.ToList());
 
-            // GROUP BY SERVICE TYPE
             var byService = records
                 .GroupBy(r => r.ServiceId)
                 .ToDictionary(g => g.Key.ToString(), g => g.ToList());
@@ -111,7 +106,21 @@ namespace autocare_api.Controllers
                 byService
             });
         }
+
+        // PUT: api/ServiceRecord/{id}/status
+        [HttpPut("{id}/status")]
+        public async Task<IActionResult> UpdateStatus(Guid id, [FromBody] string status)
+        {
+            var record = await _db.ServiceRecords.FindAsync(id);
+            if (record == null)
+            {
+                return NotFound();
+            }
+
+            record.Status = status;
+            await _db.SaveChangesAsync();
+
+            return NoContent();
+        }
     }
-
-
 }

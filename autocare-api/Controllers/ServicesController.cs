@@ -124,5 +124,52 @@ namespace autocare_api.Controllers
                 services
             });
         }
+
+        [HttpDelete("{id}")]
+        public async Task<IActionResult> DeleteService(Guid id)
+        {
+            var service = await _db.Services.FirstOrDefaultAsync(s => s.Id == id);
+            if (service == null)
+                return NotFound(new { error = "Service not found" });
+
+            _db.Services.Remove(service);
+            await _db.SaveChangesAsync();
+
+            return Ok(new { success = true });
+        }
+
+        [HttpPut("{id}")]
+        public async Task<IActionResult> UpdateService(Guid id, [FromBody] UpdateServiceRequest request)
+        {
+            var service = await _db.Services.FirstOrDefaultAsync(s => s.Id == id);
+            if (service == null)
+                return NotFound(new { error = "Service not found" });
+
+            service.Name = request.Name;
+            service.Category = request.Category;
+            service.Description = request.Description;
+            service.Price = request.Price;
+            service.DurationMinutes = request.DurationMinutes;
+            service.UpdatedAt = DateTime.UtcNow;
+
+            await _db.SaveChangesAsync();
+
+            return Ok(new
+            {
+                success = true,
+                service = new ServiceResponse
+                {
+                    Id = service.Id,
+                    WorkshopProfileId = service.WorkshopProfileId,
+                    Name = service.Name,
+                    Category = service.Category,
+                    Description = service.Description,
+                    Price = service.Price,
+                    DurationMinutes = service.DurationMinutes
+                }
+            });
+        }
+
+
     }
 }
