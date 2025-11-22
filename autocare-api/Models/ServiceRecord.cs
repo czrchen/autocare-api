@@ -27,7 +27,7 @@ namespace autocare_api.Models
 
         // Navigation
         public Vehicle? Vehicle { get; set; }
-        public Invoice? Invoice { get; set; }
+        public Invoices? Invoice { get; set; }
 
         // Optional, keep as empty list for now
         public ICollection<ServiceItem>? ServiceItems { get; set; }

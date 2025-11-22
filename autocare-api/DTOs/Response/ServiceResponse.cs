@@ -11,6 +11,6 @@
         public int DurationMinutes { get; set; }
 
         public Guid WorkshopProfileId { get; set; }
-
+        public string Status { get; set; }
     }
 }

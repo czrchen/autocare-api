@@ -21,5 +21,7 @@
 
         public string? Remarks { get; set; }
         public string? Status { get; set; }
+
+        public Guid? InvoiceId { get; set; }
     }
 }

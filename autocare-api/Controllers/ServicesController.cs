@@ -38,6 +38,7 @@ namespace autocare_api.Controllers
                 Description = request.Description,
                 DurationMinutes = request.DurationMinutes,
                 Price = request.Price,
+                Status = "Active",
                 CreatedAt = DateTime.UtcNow,
                 UpdatedAt = DateTime.UtcNow
             };
@@ -114,7 +115,8 @@ namespace autocare_api.Controllers
                     Category = s.Category,
                     Description = s.Description,
                     Price = s.Price,
-                    DurationMinutes = s.DurationMinutes
+                    DurationMinutes = s.DurationMinutes,
+                    Status = s.Status
                 })
                 .ToListAsync();
 
@@ -125,18 +127,36 @@ namespace autocare_api.Controllers
             });
         }
 
-        [HttpDelete("{id}")]
-        public async Task<IActionResult> DeleteService(Guid id)
+        [HttpPut("{id}/activate")]
+        public async Task<IActionResult> ActivateService(Guid id)
         {
             var service = await _db.Services.FirstOrDefaultAsync(s => s.Id == id);
             if (service == null)
                 return NotFound(new { error = "Service not found" });
 
-            _db.Services.Remove(service);
+            service.Status = "Active";
+            service.UpdatedAt = DateTime.UtcNow;
+
             await _db.SaveChangesAsync();
 
             return Ok(new { success = true });
         }
+
+        [HttpPut("{id}/deactivate")]
+        public async Task<IActionResult> DeactivateService(Guid id)
+        {
+            var service = await _db.Services.FirstOrDefaultAsync(s => s.Id == id);
+            if (service == null)
+                return NotFound(new { error = "Service not found" });
+
+            service.Status = "Inactive";
+            service.UpdatedAt = DateTime.UtcNow;
+
+            await _db.SaveChangesAsync();
+
+            return Ok(new { success = true });
+        }
+
 
         [HttpPut("{id}")]
         public async Task<IActionResult> UpdateService(Guid id, [FromBody] UpdateServiceRequest request)

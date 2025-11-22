@@ -14,7 +14,7 @@ namespace autocare_api.Data
         public DbSet<Vehicle> Vehicles { get; set; }
         public DbSet<ServiceRecord> ServiceRecords { get; set; }
         public DbSet<ServiceItem> ServiceItems { get; set; }
-        public DbSet<Invoice> Invoices { get; set; }
+        public DbSet<Invoices> Invoices { get; set; }
         public DbSet<InvoiceImage> InvoiceImages { get; set; }
         public DbSet<WorkshopProfile> WorkshopProfiles { get; set; }
 
@@ -77,12 +77,6 @@ namespace autocare_api.Data
                 .HasForeignKey(sr => sr.WorkshopProfileId)
                 .OnDelete(DeleteBehavior.Restrict);
 
-            builder.Entity<ServiceRecord>()
-                .HasOne(sr => sr.Invoice)
-                .WithOne(i => i.ServiceRecord)
-                .HasForeignKey<Invoice>(i => i.ServiceRecordId)
-                .OnDelete(DeleteBehavior.Cascade);
-
             // -------------------------
             // Service Items
             // -------------------------
@@ -98,20 +92,20 @@ namespace autocare_api.Data
             // -------------------------
             // Invoice
             // -------------------------
-            builder.Entity<Invoice>()
+            builder.Entity<Invoices>()
                 .HasKey(x => x.Id);
 
-            builder.Entity<Invoice>()
+            builder.Entity<Invoices>()
                 .Property(i => i.InvoiceNumber)
                 .HasMaxLength(50);
 
-            builder.Entity<Invoice>()
+            builder.Entity<Invoices>()
                 .HasOne(i => i.User)
                 .WithMany()
                 .HasForeignKey(i => i.UserId)
                 .OnDelete(DeleteBehavior.Restrict);
 
-            builder.Entity<Invoice>()
+            builder.Entity<Invoices>()
                 .HasOne(i => i.Workshop)
                 .WithMany()
                 .HasForeignKey(i => i.WorkshopId)

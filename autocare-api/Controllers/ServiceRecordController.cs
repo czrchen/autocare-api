@@ -77,7 +77,8 @@ namespace autocare_api.Controllers
                     ServiceDate = r.ServiceDate,
                     ServiceMileage = r.ServiceMileage,
                     Remarks = r.Remarks,
-                    Status = r.Status
+                    Status = r.Status,
+                   InvoiceId = r.InvoiceId
                 })
                 .ToListAsync();
 

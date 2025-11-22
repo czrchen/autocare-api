@@ -20,6 +20,8 @@ namespace autocare_api.Models
         [Required]
         [MaxLength(100)]
         public string Name { get; set; } = "";
+        public string Status { get; set; } = "Active";
+
 
         [Required]
         public string Category { get; set; } = "";

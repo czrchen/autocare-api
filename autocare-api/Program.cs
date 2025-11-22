@@ -1,5 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using autocare_api.Data;
+using autocare_api.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -24,10 +25,15 @@ builder.Services.AddControllers()
     .AddJsonOptions(options =>
     {
         options.JsonSerializerOptions.PropertyNameCaseInsensitive = true;
+        options.JsonSerializerOptions.ReferenceHandler = System.Text.Json.Serialization.ReferenceHandler.IgnoreCycles;
     });
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
+
+builder.Services.AddScoped<InvoiceNumberGeneratorService>();
+builder.Services.AddScoped<InvoiceCalculatorService>();
+builder.Services.AddScoped<InvoicePdfService>();
 
 var app = builder.Build();
 
@@ -40,7 +46,8 @@ if (app.Environment.IsDevelopment())
 
 app.UseHttpsRedirection();
 
-app.UseCors("AllowFrontend");
+app.UseStaticFiles();
+
 
 app.UseAuthorization();
 
