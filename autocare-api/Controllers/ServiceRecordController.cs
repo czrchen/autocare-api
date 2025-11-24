@@ -55,6 +55,7 @@ namespace autocare_api.Controllers
             var records = await _db.ServiceRecords
                 .Include(r => r.Vehicle)
                 .Include(r => r.Service)
+                    .ThenInclude(s => s.Components)
                 .Include(r => r.WorkshopProfile)
                 .Include(r => r.Vehicle.User)
                 .Select(r => new ServiceRecordResponse
@@ -78,7 +79,11 @@ namespace autocare_api.Controllers
                     ServiceMileage = r.ServiceMileage,
                     Remarks = r.Remarks,
                     Status = r.Status,
-                   InvoiceId = r.InvoiceId
+                    InvoiceId = r.InvoiceId,
+
+                    ComponentTypes = r.Service.Components
+                        .Select(c => c.ComponentType.ToString())
+                        .ToList()
                 })
                 .ToListAsync();
 
@@ -107,6 +112,7 @@ namespace autocare_api.Controllers
                 byService
             });
         }
+
 
         // PUT: api/ServiceRecord/{id}/status
         [HttpPut("{id}/status")]

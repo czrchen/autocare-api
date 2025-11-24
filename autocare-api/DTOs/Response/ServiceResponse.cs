@@ -12,5 +12,7 @@
 
         public Guid WorkshopProfileId { get; set; }
         public string Status { get; set; }
+
+        public List<string> ComponentTypes { get; set; } = new();
     }
 }

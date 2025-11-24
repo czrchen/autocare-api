@@ -19,14 +19,14 @@ namespace autocare_api.Data
         public DbSet<WorkshopProfile> WorkshopProfiles { get; set; }
 
         public DbSet<Service> Services { get; set; }
+        public DbSet<ServiceComponent> ServiceComponents { get; set; }
 
-        public DbSet<PasswordResetToken> PasswordResetTokens { get; set; } = null!;
+        public DbSet<PasswordResetToken> PasswordResetTokens { get; set; }
 
         protected override void OnModelCreating(ModelBuilder builder)
         {
             base.OnModelCreating(builder);
 
-            // Add this at the top of your OnModelCreating method
             var jsonOptions = new System.Text.Json.JsonSerializerOptions
             {
                 PropertyNameCaseInsensitive = true
@@ -42,10 +42,6 @@ namespace autocare_api.Data
                 .HasIndex(x => x.Email)
                 .IsUnique();
 
-            builder.Entity<User>()
-                .Property(x => x.Role)
-                .HasMaxLength(20);
-
             // -------------------------
             // Password Reset Tokens
             // -------------------------
@@ -54,7 +50,7 @@ namespace autocare_api.Data
 
             builder.Entity<PasswordResetToken>()
                 .HasOne(t => t.User)
-                .WithMany() 
+                .WithMany()
                 .HasForeignKey(t => t.UserId)
                 .OnDelete(DeleteBehavior.Cascade);
 
@@ -73,9 +69,6 @@ namespace autocare_api.Data
                 .HasForeignKey(v => v.UserId)
                 .OnDelete(DeleteBehavior.Cascade);
 
-            builder.Entity<Vehicle>()
-                .HasIndex(v => v.PlateNumber);
-
             // -------------------------
             // Service Records
             // -------------------------
@@ -90,8 +83,15 @@ namespace autocare_api.Data
 
             builder.Entity<ServiceRecord>()
                 .HasOne(sr => sr.WorkshopProfile)
-                .WithMany() // optional: you can change to WithMany(wp => wp.ServiceRecords)
+                .WithMany()
                 .HasForeignKey(sr => sr.WorkshopProfileId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            // NEW: service link
+            builder.Entity<ServiceRecord>()
+                .HasOne(sr => sr.Service)
+                .WithMany(s => s.ServiceRecords)
+                .HasForeignKey(sr => sr.ServiceId)
                 .OnDelete(DeleteBehavior.Restrict);
 
             // -------------------------
@@ -107,14 +107,31 @@ namespace autocare_api.Data
                 .OnDelete(DeleteBehavior.Cascade);
 
             // -------------------------
-            // Invoice
+            // Services
+            // -------------------------
+            builder.Entity<Service>()
+                .HasKey(s => s.Id);
+
+            builder.Entity<Service>()
+                .HasOne(s => s.WorkshopProfile)
+                .WithMany(wp => wp.Services)
+                .HasForeignKey(s => s.WorkshopProfileId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            builder.Entity<ServiceComponent>()
+                .HasKey(sc => sc.Id);
+
+            builder.Entity<ServiceComponent>()
+                .HasOne(sc => sc.Service)
+                .WithMany(s => s.Components)
+                .HasForeignKey(sc => sc.ServiceId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            // -------------------------
+            // Invoices
             // -------------------------
             builder.Entity<Invoices>()
                 .HasKey(x => x.Id);
-
-            builder.Entity<Invoices>()
-                .Property(i => i.InvoiceNumber)
-                .HasMaxLength(50);
 
             builder.Entity<Invoices>()
                 .HasOne(i => i.User)
@@ -129,7 +146,7 @@ namespace autocare_api.Data
                 .OnDelete(DeleteBehavior.Restrict);
 
             // -------------------------
-            // Invoice Image (OCR)
+            // Invoice Images
             // -------------------------
             builder.Entity<InvoiceImage>()
                 .HasKey(x => x.Id);
@@ -140,7 +157,6 @@ namespace autocare_api.Data
                 .HasForeignKey<InvoiceImage>(ii => ii.ServiceRecordId)
                 .OnDelete(DeleteBehavior.Cascade);
 
-            // Map JSON field to PostgreSQL jsonb
             builder.Entity<InvoiceImage>()
                 .Property(ii => ii.ExtractedJson)
                 .HasColumnType("jsonb");
@@ -158,51 +174,22 @@ namespace autocare_api.Data
                 .OnDelete(DeleteBehavior.Cascade);
 
             builder.Entity<WorkshopProfile>()
-                .Property(wp => wp.WorkshopName)
-                .HasMaxLength(100);
-
-            //builder.Entity<WorkshopProfile>()
-            //    .OwnsOne(wp => wp.OperatingHours, oh =>
-            //    {
-            //        oh.OwnsMany(o => o.HoursByDay, dh =>
-            //        {
-            //            dh.Property(p => p.Day);
-            //            dh.Property(p => p.IsOpen);
-            //            dh.Property(p => p.StartTime);
-            //            dh.Property(p => p.EndTime);
-            //        });
-            //    })
-            //    .Navigation(wp => wp.OperatingHours)
-            //    .IsRequired(false);
-
-            // Then update OperatingHours configuration to use these options:
-            builder.Entity<WorkshopProfile>()
                 .Property(wp => wp.OperatingHours)
                 .HasConversion(
                     v => System.Text.Json.JsonSerializer.Serialize(v, jsonOptions),
                     v => System.Text.Json.JsonSerializer.Deserialize<WeeklyOperatingHours>(v, jsonOptions)
-                         ?? new WeeklyOperatingHours()
+                            ?? new WeeklyOperatingHours()
                 )
                 .HasColumnType("jsonb");
 
-            // Also update Address to be consistent:
             builder.Entity<WorkshopProfile>()
                 .Property(wp => wp.Address)
                 .HasConversion(
                     v => System.Text.Json.JsonSerializer.Serialize(v, jsonOptions),
                     v => System.Text.Json.JsonSerializer.Deserialize<AddressObject>(v, jsonOptions)
-                         ?? new AddressObject()
+                            ?? new AddressObject()
                 )
                 .HasColumnType("jsonb");
-
-            builder.Entity<Service>()
-                .HasKey(s => s.Id);
-
-            builder.Entity<Service>()
-                .HasOne(s => s.WorkshopProfile)
-                .WithMany(wp => wp.Services)
-                .HasForeignKey(s => s.WorkshopProfileId)
-                .OnDelete(DeleteBehavior.Cascade);
         }
     }
 }
