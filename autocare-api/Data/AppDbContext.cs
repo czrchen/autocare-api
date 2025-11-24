@@ -20,6 +20,8 @@ namespace autocare_api.Data
 
         public DbSet<Service> Services { get; set; }
 
+        public DbSet<PasswordResetToken> PasswordResetTokens { get; set; } = null!;
+
         protected override void OnModelCreating(ModelBuilder builder)
         {
             base.OnModelCreating(builder);
@@ -43,6 +45,21 @@ namespace autocare_api.Data
             builder.Entity<User>()
                 .Property(x => x.Role)
                 .HasMaxLength(20);
+
+            // -------------------------
+            // Password Reset Tokens
+            // -------------------------
+            builder.Entity<PasswordResetToken>()
+                .HasKey(x => x.Id);
+
+            builder.Entity<PasswordResetToken>()
+                .HasOne(t => t.User)
+                .WithMany() 
+                .HasForeignKey(t => t.UserId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            builder.Entity<PasswordResetToken>()
+                .HasIndex(t => new { t.UserId, t.ExpiresAt });
 
             // -------------------------
             // Vehicles

@@ -34,6 +34,8 @@ builder.Services.AddSwaggerGen();
 builder.Services.AddScoped<InvoiceNumberGeneratorService>();
 builder.Services.AddScoped<InvoiceCalculatorService>();
 builder.Services.AddScoped<InvoicePdfService>();
+builder.Services.AddScoped<IEmailSender, SmtpEmailSender>();
+
 
 var app = builder.Build();
 

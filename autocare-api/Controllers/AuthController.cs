@@ -1,7 +1,7 @@
 ﻿using autocare_api.Data;
 using autocare_api.DTOs;
 using autocare_api.Models;
-using Microsoft.AspNetCore.Identity.Data;
+using autocare_api.Services;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using System.Security.Cryptography;
@@ -14,26 +14,33 @@ namespace autocare_api.Controllers
     public class AuthController : ControllerBase
     {
         private readonly AppDbContext _db;
+        private readonly IConfiguration _config;
+        private readonly IEmailSender _emailSender;
+        private readonly ILogger<AuthController> _logger;
 
-        public AuthController(AppDbContext db)
+        public AuthController(
+            AppDbContext db,
+            IConfiguration config,
+            IEmailSender emailSender,
+            ILogger<AuthController> logger)
         {
             _db = db;
+            _config = config;
+            _emailSender = emailSender;
+            _logger = logger;
         }
 
         [HttpPost("register-driver")]
         public async Task<IActionResult> Register(DriverRegisterRequest request)
         {
-            // 1. Validate Email Existence
             var existing = await _db.Users.FirstOrDefaultAsync(x => x.Email == request.Email);
             if (existing != null)
             {
                 return BadRequest(new { error = "Email already exists" });
             }
 
-            // 2. Hash Password
             string passwordHash = HashPassword(request.Password);
 
-            // 3. Create User
             var user = new User
             {
                 Id = Guid.NewGuid(),
@@ -45,7 +52,6 @@ namespace autocare_api.Controllers
                 CreatedAt = DateTime.UtcNow
             };
 
-            // 4. Save to DB
             _db.Users.Add(user);
             await _db.SaveChangesAsync();
 
@@ -55,7 +61,6 @@ namespace autocare_api.Controllers
         [HttpPost("login")]
         public async Task<IActionResult> Login(UserLoginRequest request)
         {
-            // 1. Find user by email AND role together
             var user = await _db.Users
                 .FirstOrDefaultAsync(x =>
                     x.Email == request.Email &&
@@ -64,13 +69,11 @@ namespace autocare_api.Controllers
             if (user == null)
                 return Unauthorized(new { error = "Invalid credentials" });
 
-            // 2. Check password
             string hashed = HashPassword(request.Password);
 
             if (user.PasswordHash != hashed)
                 return Unauthorized(new { error = "Invalid credentials" });
 
-            // 3. Success: return user info
             return Ok(new
             {
                 success = true,
@@ -88,7 +91,6 @@ namespace autocare_api.Controllers
         [HttpPost("register-workshop")]
         public async Task<IActionResult> RegisterWorkshop(WorkshopRegisterRequest request)
         {
-
             Console.WriteLine("=== REQUEST DEBUG ===");
             Console.WriteLine($"OperatingHours is null? {request.OperatingHours == null}");
             Console.WriteLine($"OperatingHours :  {request.OperatingHours}");
@@ -97,29 +99,26 @@ namespace autocare_api.Controllers
 
             var serialized = System.Text.Json.JsonSerializer.Serialize(request.OperatingHours);
             Console.WriteLine($"Received OperatingHours JSON: {serialized}");
-            // 1. Check if email already exists
+
             var existing = await _db.Users.FirstOrDefaultAsync(x => x.Email == request.Email);
             if (existing != null)
             {
                 return BadRequest(new { error = "Email already exists" });
             }
 
-            // 2. Hash password
             string passwordHash = HashPassword(request.Password);
 
-            // 3. Create User (WORKSHOP ACCOUNT)
             var user = new User
             {
                 Id = Guid.NewGuid(),
-                FullName = request.OwnerName,          // Save owner name here
+                FullName = request.OwnerName,
                 Email = request.Email,
                 Phone = request.Phone,
                 PasswordHash = passwordHash,
-                Role = "Workshop",                     // Important
+                Role = "Workshop",
                 CreatedAt = DateTime.UtcNow
             };
 
-            // 4. Create WorkshopProfile
             var workshop = new WorkshopProfile
             {
                 Id = Guid.NewGuid(),
@@ -127,25 +126,139 @@ namespace autocare_api.Controllers
                 WorkshopName = request.WorkshopName,
                 Address = request.Address,
                 OperatingHours = request.OperatingHours,
-                Rating = 0                             // default rating = 0
+                Rating = 0
             };
 
-            // 5. Save to DB
             _db.Users.Add(user);
             _db.WorkshopProfiles.Add(workshop);
             await _db.SaveChangesAsync();
 
             return Ok(new { success = true, message = "Workshop registered successfully" });
         }
-        
 
-        // 🔐 Simple SHA256 hashing
+        [HttpPost("forgot-password")]
+        public async Task<IActionResult> ForgotPassword([FromBody] ForgotPasswordRequest request)
+        {
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(ModelState);
+            }
+
+            var user = await _db.Users.FirstOrDefaultAsync(u => u.Email == request.Email);
+
+            // Do not reveal if user exists or not
+            if (user == null)
+            {
+                return Ok(new { message = "If an account exists, a reset link has been sent." });
+            }
+
+            var rawToken = GenerateResetToken();
+            var tokenHash = HashString(rawToken);
+            var expiresAt = DateTime.UtcNow.AddHours(24);
+
+            var oldTokens = await _db.PasswordResetTokens
+      .Where(t => t.UserId == user.Id &&
+                  t.UsedAt == null &&
+                  t.ExpiresAt > DateTime.UtcNow)
+      .ToListAsync();
+
+
+            foreach (var t in oldTokens)
+            {
+                t.ExpiresAt = DateTime.UtcNow;
+            }
+
+            var resetToken = new PasswordResetToken
+            {
+                Id = Guid.NewGuid(),
+                UserId = user.Id,
+                TokenHash = tokenHash,
+                CreatedAt = DateTime.UtcNow,
+                ExpiresAt = expiresAt
+            };
+
+            _db.PasswordResetTokens.Add(resetToken);
+            await _db.SaveChangesAsync();
+
+            var frontendBaseUrl = _config["FrontendBaseUrl"] ?? "http://localhost:3000";
+
+            var encodedEmail = Uri.EscapeDataString(user.Email);
+            var encodedToken = Uri.EscapeDataString(rawToken);
+
+            var resetLink = $"{frontendBaseUrl}/reset-password?email={encodedEmail}&token={encodedToken}";
+
+            try
+            {
+                await _emailSender.SendPasswordResetEmailAsync(user.Email, resetLink);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error sending password reset email to {Email}", user.Email);
+            }
+
+            return Ok(new { message = "If an account exists, a reset link has been sent." });
+        }
+
+        [HttpPost("reset-password")]
+        public async Task<IActionResult> ResetPassword([FromBody] ResetPasswordRequest request)
+        {
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(ModelState);
+            }
+
+            var user = await _db.Users.FirstOrDefaultAsync(u => u.Email == request.Email);
+            if (user == null)
+            {
+                // Do not reveal anything
+                return Ok(new { message = "If the link is valid, the password has been reset." });
+            }
+
+            var providedTokenHash = HashString(request.Token);
+
+            var tokenRecord = await _db.PasswordResetTokens
+    .FirstOrDefaultAsync(t =>
+        t.UserId == user.Id &&
+        t.TokenHash == providedTokenHash &&
+        t.UsedAt == null &&
+        t.ExpiresAt > DateTime.UtcNow);
+
+
+            if (tokenRecord == null)
+            {
+                return BadRequest(new { message = "Reset link is invalid or has expired." });
+            }
+
+            var newPasswordHash = HashPassword(request.NewPassword);
+            user.PasswordHash = newPasswordHash;
+
+            tokenRecord.UsedAt = DateTime.UtcNow;
+
+            await _db.SaveChangesAsync();
+
+            return Ok(new { message = "Password has been reset successfully." });
+        }
+
         private string HashPassword(string password)
         {
             using var sha = SHA256.Create();
             var bytes = Encoding.UTF8.GetBytes(password);
             var hash = sha.ComputeHash(bytes);
             return Convert.ToBase64String(hash);
+        }
+
+        private string HashString(string value)
+        {
+            using var sha = SHA256.Create();
+            var bytes = Encoding.UTF8.GetBytes(value);
+            var hash = sha.ComputeHash(bytes);
+            return Convert.ToBase64String(hash);
+        }
+
+        private string GenerateResetToken()
+        {
+            var bytes = RandomNumberGenerator.GetBytes(32);
+            return Convert.ToBase64String(bytes);
         }
     }
 }
