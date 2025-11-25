@@ -125,7 +125,7 @@ namespace autocare_api.Controllers
                     Year = v.Year,
                     PlateNumber = v.PlateNumber,
                     CurrentMileage = v.CurrentMileage,
-                    Image = v.Image, 
+                    Image = v.Image,
                     Color = v.Color,
                     PurchaseDate = v.PurchaseDate.ToString("yyyy-MM-dd"),
                 })
