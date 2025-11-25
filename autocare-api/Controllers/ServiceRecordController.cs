@@ -81,12 +81,14 @@ namespace autocare_api.Controllers
                     Status = r.Status,
                     InvoiceId = r.InvoiceId,
 
+                    // new, component types from the linked Service
                     ComponentTypes = r.Service.Components
                         .Select(c => c.ComponentType.ToString())
                         .ToList()
                 })
                 .ToListAsync();
 
+            // build the dictionaries like before
             var vehicles = await _db.Vehicles
                 .Select(v => new { v.Id, v.UserId })
                 .ToListAsync();
@@ -112,6 +114,7 @@ namespace autocare_api.Controllers
                 byService
             });
         }
+
 
 
         // PUT: api/ServiceRecord/{id}/status
