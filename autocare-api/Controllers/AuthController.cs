@@ -17,17 +17,20 @@ namespace autocare_api.Controllers
         private readonly IConfiguration _config;
         private readonly IEmailSender _emailSender;
         private readonly ILogger<AuthController> _logger;
+        private readonly IGeocodingService _geocodingService;
 
         public AuthController(
             AppDbContext db,
             IConfiguration config,
             IEmailSender emailSender,
-            ILogger<AuthController> logger)
+            ILogger<AuthController> logger,
+            IGeocodingService geocodingService)
         {
             _db = db;
             _config = config;
             _emailSender = emailSender;
             _logger = logger;
+            _geocodingService = geocodingService;
         }
 
         [HttpPost("register-driver")]
@@ -62,17 +65,19 @@ namespace autocare_api.Controllers
         public async Task<IActionResult> Login(UserLoginRequest request)
         {
             var user = await _db.Users
-                .FirstOrDefaultAsync(x =>
-                    x.Email == request.Email &&
-                    x.Role.ToLower() == request.Role.ToLower());
+                .FirstOrDefaultAsync(x => x.Email == request.Email);
 
             if (user == null)
+            {
                 return Unauthorized(new { error = "Invalid credentials" });
+            }
 
             string hashed = HashPassword(request.Password);
 
             if (user.PasswordHash != hashed)
+            {
                 return Unauthorized(new { error = "Invalid credentials" });
+            }
 
             return Ok(new
             {
@@ -80,7 +85,7 @@ namespace autocare_api.Controllers
                 user = new
                 {
                     user.Id,
-                    user.FullName,
+                    FullName = user.FullName,
                     user.Email,
                     user.Phone,
                     user.Role
@@ -119,6 +124,7 @@ namespace autocare_api.Controllers
                 CreatedAt = DateTime.UtcNow
             };
 
+            // Create workshop profile
             var workshop = new WorkshopProfile
             {
                 Id = Guid.NewGuid(),
@@ -126,8 +132,26 @@ namespace autocare_api.Controllers
                 WorkshopName = request.WorkshopName,
                 Address = request.Address,
                 OperatingHours = request.OperatingHours,
-                Rating = 0
+                Rating = 0,
+                ApprovalStatus = WorkshopApprovalStatus.Pending
             };
+
+            // Geocode the address and set latitude and longitude if found
+            try
+            {
+                var coords = await _geocodingService.GeocodeAsync(request.Address);
+
+                if (coords != null)
+                {
+                    workshop.Latitude = coords.Value.Latitude;
+                    workshop.Longitude = coords.Value.Longitude;
+                }
+            }
+            catch (Exception ex)
+            {
+                // Log the error but do not block registration
+                _logger.LogError(ex, "Geocoding failed for workshop {WorkshopName}", request.WorkshopName);
+            }
 
             _db.Users.Add(user);
             _db.WorkshopProfiles.Add(workshop);
@@ -146,7 +170,6 @@ namespace autocare_api.Controllers
 
             var user = await _db.Users.FirstOrDefaultAsync(u => u.Email == request.Email);
 
-            // Do not reveal if user exists or not
             if (user == null)
             {
                 return Ok(new { message = "If an account exists, a reset link has been sent." });
@@ -157,11 +180,10 @@ namespace autocare_api.Controllers
             var expiresAt = DateTime.UtcNow.AddHours(24);
 
             var oldTokens = await _db.PasswordResetTokens
-      .Where(t => t.UserId == user.Id &&
-                  t.UsedAt == null &&
-                  t.ExpiresAt > DateTime.UtcNow)
-      .ToListAsync();
-
+                .Where(t => t.UserId == user.Id &&
+                            t.UsedAt == null &&
+                            t.ExpiresAt > DateTime.UtcNow)
+                .ToListAsync();
 
             foreach (var t in oldTokens)
             {
@@ -210,19 +232,17 @@ namespace autocare_api.Controllers
             var user = await _db.Users.FirstOrDefaultAsync(u => u.Email == request.Email);
             if (user == null)
             {
-                // Do not reveal anything
                 return Ok(new { message = "If the link is valid, the password has been reset." });
             }
 
             var providedTokenHash = HashString(request.Token);
 
             var tokenRecord = await _db.PasswordResetTokens
-    .FirstOrDefaultAsync(t =>
-        t.UserId == user.Id &&
-        t.TokenHash == providedTokenHash &&
-        t.UsedAt == null &&
-        t.ExpiresAt > DateTime.UtcNow);
-
+                .FirstOrDefaultAsync(t =>
+                    t.UserId == user.Id &&
+                    t.TokenHash == providedTokenHash &&
+                    t.UsedAt == null &&
+                    t.ExpiresAt > DateTime.UtcNow);
 
             if (tokenRecord == null)
             {

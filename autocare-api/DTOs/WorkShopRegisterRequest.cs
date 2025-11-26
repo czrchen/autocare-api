@@ -12,5 +12,7 @@ namespace autocare_api.DTOs
         public string OwnerName { get; set; } = "";
         public AddressObject Address { get; set; } = new AddressObject();
         public WeeklyOperatingHours OperatingHours { get; set; } = new WeeklyOperatingHours();
+        public double? Latitude { get; set; }
+        public double? Longitude { get; set; }
     }
 }

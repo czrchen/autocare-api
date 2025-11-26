@@ -35,6 +35,9 @@ builder.Services.AddScoped<InvoiceNumberGeneratorService>();
 builder.Services.AddScoped<InvoiceCalculatorService>();
 builder.Services.AddScoped<InvoicePdfService>();
 builder.Services.AddScoped<IEmailSender, SmtpEmailSender>();
+builder.Services.AddHttpClient<GeocodingService>();
+builder.Services.AddScoped<IGeocodingService, DummyGeocodingService>();
+
 
 
 var app = builder.Build();

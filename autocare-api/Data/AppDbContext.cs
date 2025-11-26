@@ -190,6 +190,15 @@ namespace autocare_api.Data
                             ?? new AddressObject()
                 )
                 .HasColumnType("jsonb");
+
+            // new: store enum as string so the database shows "Pending", "Approved", "Rejected"
+            builder.Entity<WorkshopProfile>()
+                .Property(wp => wp.ApprovalStatus)
+                .HasConversion<string>();
+
+            // new: index for faster queries like "only approved workshops"
+            builder.Entity<WorkshopProfile>()
+                .HasIndex(wp => wp.ApprovalStatus);
         }
     }
 }

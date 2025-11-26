@@ -58,13 +58,19 @@ namespace autocare_api.Controllers
             };
         }
 
-        // GET: api/workshop/getAllWorkshops
+        // GET: api/workshop/getAllWorkshops?onlyApproved=true
         [HttpGet("getAllWorkshops")]
-        public async Task<IActionResult> GetWorkshops()
+        public async Task<IActionResult> GetWorkshops([FromQuery] bool onlyApproved = false)
         {
-            var workshops = await _db.WorkshopProfiles
-                .AsNoTracking()
-                .ToListAsync();
+            var query = _db.WorkshopProfiles
+                .AsNoTracking();
+
+            if (onlyApproved)
+            {
+                query = query.Where(w => w.ApprovalStatus == WorkshopApprovalStatus.Approved);
+            }
+
+            var workshops = await query.ToListAsync();
 
             var result = workshops.Select(w => new
             {
@@ -73,10 +79,16 @@ namespace autocare_api.Controllers
                 address = w.Address,
                 operatingHours = MapHoursToDto(w.OperatingHours),
                 rating = w.Rating,
+
+                // new fields for map and filtering
+                status = w.ApprovalStatus.ToString(),   // "Pending", "Approved", "Rejected"
+                latitude = w.Latitude,                  // double?
+                longitude = w.Longitude                 // double?
             }).ToList();
 
             return Ok(result);
         }
+
 
         // GET: api/workshop/user/{email}
         [HttpGet("user/{email}")]
@@ -97,8 +109,13 @@ namespace autocare_api.Controllers
                 WorkshopName = w.WorkshopName,
                 Address = w.Address,
                 OperatingHours = MapHoursToDto(w.OperatingHours),
-                Rating = w.Rating
+                Rating = w.Rating,
+
+                Status = w.ApprovalStatus.ToString(),
+                Latitude = w.Latitude,
+                Longitude = w.Longitude
             }).ToList();
+
 
             return Ok(new
             {
