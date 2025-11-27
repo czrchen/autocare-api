@@ -28,7 +28,7 @@ namespace autocare_api.Models
 
         public User? User { get; set; }
 
-        public ICollection<Service>? Services { get; set; }
+        public ICollection<Service> Services { get; set; } = new List<Service>();
 
         public double? Latitude { get; set; }
         public double? Longitude { get; set; }

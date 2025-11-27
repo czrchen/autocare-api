@@ -124,7 +124,6 @@ namespace autocare_api.Controllers
                 CreatedAt = DateTime.UtcNow
             };
 
-            // Create workshop profile
             var workshop = new WorkshopProfile
             {
                 Id = Guid.NewGuid(),
@@ -136,7 +135,7 @@ namespace autocare_api.Controllers
                 ApprovalStatus = WorkshopApprovalStatus.Pending
             };
 
-            // Geocode the address and set latitude and longitude if found
+            // 1) Try to geocode the address and set lat/lng
             try
             {
                 var coords = await _geocodingService.GeocodeAsync(request.Address);
@@ -149,16 +148,22 @@ namespace autocare_api.Controllers
             }
             catch (Exception ex)
             {
-                // Log the error but do not block registration
-                _logger.LogError(ex, "Geocoding failed for workshop {WorkshopName}", request.WorkshopName);
+                _logger.LogError(
+                    ex,
+                    "Geocoding failed for workshop {WorkshopName}",
+                    request.WorkshopName
+                );
             }
 
+            // 2) Save both user and workshop in one go
             _db.Users.Add(user);
             _db.WorkshopProfiles.Add(workshop);
+
             await _db.SaveChangesAsync();
 
             return Ok(new { success = true, message = "Workshop registered successfully" });
         }
+
 
         [HttpPost("forgot-password")]
         public async Task<IActionResult> ForgotPassword([FromBody] ForgotPasswordRequest request)

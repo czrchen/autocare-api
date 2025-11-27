@@ -1,5 +1,5 @@
 ﻿using System.Threading.Tasks;
-using autocare_api.Models; // for AddressObject
+using autocare_api.Models; 
 
 namespace autocare_api.Services
 {
