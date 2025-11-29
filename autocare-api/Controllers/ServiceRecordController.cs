@@ -58,6 +58,7 @@ namespace autocare_api.Controllers
                     .ThenInclude(s => s.Components)
                 .Include(r => r.WorkshopProfile)
                 .Include(r => r.Vehicle.User)
+                .Include(r => r.Invoice)
                 .Select(r => new ServiceRecordResponse
                 {
                     Id = r.Id,
@@ -80,6 +81,7 @@ namespace autocare_api.Controllers
                     Remarks = r.Remarks,
                     Status = r.Status,
                     InvoiceId = r.InvoiceId,
+                    InvoicePdfUrl = r.Invoice != null ? r.Invoice.PdfUrl : null,
 
                     // new, component types from the linked Service
                     ComponentTypes = r.Service.Components

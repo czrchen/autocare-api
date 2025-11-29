@@ -30,10 +30,13 @@ namespace autocare_api.Services
 
             if (service == null)
                 throw new Exception("Service not found");
+            var items = await _context.ServiceItems
+  .Where(i => i.ServiceRecordId == serviceRecordId)
+  .ToListAsync();
 
-            var subtotal = service.Price;
-            var tax = subtotal * TaxRate;
-            var total = subtotal + tax;
+            decimal subtotal = items.Sum(i => i.UnitPrice * i.Quantity);
+            decimal tax = subtotal * 0.06m;
+            decimal total = subtotal + tax;
 
             return (subtotal, tax, total);
         }

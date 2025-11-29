@@ -70,10 +70,22 @@ namespace autocare_api.Controllers
             if (service == null)
                 return NotFound(new { message = "Service not found" });
 
+            // Add the main service as a ServiceItem
+            var baseItem = new ServiceItem
+            {
+                Id = Guid.NewGuid(),
+                ServiceRecordId = serviceRecord.Id,
+                ItemName = service.Name,
+                UnitPrice = service.Price,
+                Quantity = 1
+            };
+            _context.ServiceItems.Add(baseItem);
+            await _context.SaveChangesAsync();
+
             // 1. Generate invoice number
             var invoiceNumber = await _invoiceNumberService.GenerateInvoiceNumberAsync();
 
-            // 2. Auto calculate totals
+            // 2. Auto calculate totals (based on ServiceItems)
             var (subtotal, tax, total) =
                 await _invoiceCalculatorService.CalculateAsync(dto.ServiceRecordId);
 
@@ -94,12 +106,13 @@ namespace autocare_api.Controllers
             _context.Invoices.Add(invoice);
             await _context.SaveChangesAsync();
 
-            // 4. Generate PDF (now that invoice.Id exists)
+            // 4. Generate PDF (full itemized invoice)
             var pdfUrl = _pdfService.GeneratePdf(
                 invoice,
                 customer,
                 workshop,
                 service,
+                serviceRecord,  // <-- ADDED
                 subtotal,
                 tax,
                 total
@@ -128,7 +141,14 @@ namespace autocare_api.Controllers
                 .FirstOrDefaultAsync(s => s.InvoiceId == id);
 
             if (serviceRecord != null)
+            {
                 serviceRecord.InvoiceId = null;
+                var items = _context.ServiceItems
+                    .Where(i => i.ServiceRecordId == serviceRecord.Id)
+                    .ToList();
+
+                _context.ServiceItems.RemoveRange(items);
+            }
 
             _context.Invoices.Remove(invoice);
             await _context.SaveChangesAsync();

@@ -23,6 +23,7 @@
         public string? Status { get; set; }
 
         public Guid? InvoiceId { get; set; }
+        public string? InvoicePdfUrl { get; set; }
 
         public List<string> ComponentTypes { get; set; } = new();
     }

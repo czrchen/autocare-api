@@ -137,5 +137,40 @@ namespace autocare_api.Controllers
                 vehicles = vehicles      // ← list of vehicles
             });
         }
+
+        [HttpPut("{id}/mileage")]
+        public async Task<IActionResult> UpdateMileage(Guid id, [FromBody] int newMileage)
+        {
+            var vehicle = await _db.Vehicles.FirstOrDefaultAsync(v => v.Id == id);
+            if (vehicle == null)
+                return NotFound(new { error = "Vehicle not found" });
+
+            vehicle.CurrentMileage = newMileage;
+            await _db.SaveChangesAsync();
+
+            return Ok(new { success = true });
+        }
+
+        [HttpGet("{id}")]
+        public async Task<IActionResult> GetVehicle(Guid id)
+        {
+            var vehicle = await _db.Vehicles.FirstOrDefaultAsync(v => v.Id == id);
+            if (vehicle == null)
+                return NotFound(new { error = "Vehicle not found" });
+
+            return Ok(new VehicleResponse
+            {
+                Id = vehicle.Id,
+                Make = vehicle.Manufacturer,
+                Model = vehicle.Model,
+                Year = vehicle.Year,
+                PlateNumber = vehicle.PlateNumber,
+                CurrentMileage = vehicle.CurrentMileage,
+                Image = vehicle.Image,
+                Color = vehicle.Color,
+                PurchaseDate = vehicle.PurchaseDate.ToString("yyyy-MM-dd")
+            });
+        }
+
     }
 }
