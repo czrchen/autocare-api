@@ -40,6 +40,18 @@ namespace autocare_api.Controllers
             await _context.SaveChangesAsync();
             return Ok(new { message = "Items saved" });
         }
+
+        // GET: /api/serviceitem/by-record/{serviceRecordId}
+        [HttpGet("by-record/{serviceRecordId}")]
+        public async Task<IActionResult> GetItemsByRecord(Guid serviceRecordId)
+        {
+            var items = await _context.ServiceItems
+                .Where(i => i.ServiceRecordId == serviceRecordId)
+                .ToListAsync();
+
+            return Ok(items);
+        }
+
     }
 
     public class AddItemsDto

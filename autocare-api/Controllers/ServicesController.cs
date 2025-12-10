@@ -156,6 +156,30 @@ namespace autocare_api.Controllers
             });
         }
 
+        // GET: /api/services/{id}
+        [HttpGet("{id}")]
+        public async Task<IActionResult> GetServiceById(Guid id)
+        {
+            var service = await _db.Services
+                .FirstOrDefaultAsync(s => s.Id == id);
+
+            if (service == null)
+                return NotFound(new { error = "Service not found" });
+
+            return Ok(new
+            {
+                id = service.Id,
+                workshopProfileId = service.WorkshopProfileId,
+                name = service.Name,
+                category = service.Category,
+                description = service.Description,
+                price = service.Price,
+                durationMinutes = service.DurationMinutes,
+                status = service.Status
+            });
+        }
+
+
         [HttpPut("{id}/activate")]
         public async Task<IActionResult> ActivateService(Guid id)
         {
