@@ -12,8 +12,8 @@ using autocare_api.Data;
 namespace autocare_api.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    [Migration("20251126110908_AddWorkshopLatLng")]
-    partial class AddWorkshopLatLng
+    [Migration("20251223064957_AddEmailNotificationFlagsforUser")]
+    partial class AddEmailNotificationFlagsforUser
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -276,6 +276,12 @@ namespace autocare_api.Migrations
                         .IsRequired()
                         .HasColumnType("text");
 
+                    b.Property<bool>("EmailNotificationsConfirmed")
+                        .HasColumnType("boolean");
+
+                    b.Property<bool>("EmailNotificationsRequested")
+                        .HasColumnType("boolean");
+
                     b.Property<string>("FullName")
                         .IsRequired()
                         .HasColumnType("text");
@@ -364,6 +370,12 @@ namespace autocare_api.Migrations
                     b.Property<string>("ApprovalStatus")
                         .IsRequired()
                         .HasColumnType("text");
+
+                    b.Property<bool>("EmailNotificationsConfirmed")
+                        .HasColumnType("boolean");
+
+                    b.Property<bool>("EmailNotificationsRequested")
+                        .HasColumnType("boolean");
 
                     b.Property<double?>("Latitude")
                         .HasColumnType("double precision");

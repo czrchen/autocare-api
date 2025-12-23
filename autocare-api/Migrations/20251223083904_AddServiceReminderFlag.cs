@@ -5,25 +5,25 @@
 namespace autocare_api.Migrations
 {
     /// <inheritdoc />
-    public partial class AddCategoryService : Migration
+    public partial class AddServiceReminderFlag : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
         {
-            migrationBuilder.AddColumn<string>(
-                name: "Category",
-                table: "Services",
-                type: "text",
+            migrationBuilder.AddColumn<bool>(
+                name: "ReminderSent",
+                table: "ServiceRecords",
+                type: "boolean",
                 nullable: false,
-                defaultValue: "");
+                defaultValue: false);
         }
 
         /// <inheritdoc />
         protected override void Down(MigrationBuilder migrationBuilder)
         {
             migrationBuilder.DropColumn(
-                name: "Category",
-                table: "Services");
+                name: "ReminderSent",
+                table: "ServiceRecords");
         }
     }
 }

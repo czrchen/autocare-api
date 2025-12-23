@@ -1,8 +1,20 @@
 using Microsoft.EntityFrameworkCore;
 using autocare_api.Data;
 using autocare_api.Services;
+using Amazon.SimpleNotificationService;
+using Amazon.Extensions.NETCore.Setup;
 
 var builder = WebApplication.CreateBuilder(args);
+
+// AWS config from appsettings.json
+builder.Services.AddDefaultAWSOptions(builder.Configuration.GetAWSOptions());
+
+// Register SNS
+builder.Services.AddAWSService<IAmazonSimpleNotificationService>();
+
+// Your existing services
+builder.Services.AddScoped<IEmailSender, SmtpEmailSender>();
+builder.Services.AddScoped<IGeocodingService, GeocodingService>();
 
 builder.Services.AddCors(options =>
 {
@@ -37,8 +49,6 @@ builder.Services.AddScoped<InvoicePdfService>();
 builder.Services.AddScoped<IEmailSender, SmtpEmailSender>();
 builder.Services.AddHttpClient<GeocodingService>();
 builder.Services.AddScoped<IGeocodingService, GeocodingService>();
-
-
 
 var app = builder.Build();
 

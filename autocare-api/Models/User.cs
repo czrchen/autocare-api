@@ -13,7 +13,9 @@ namespace autocare_api.Models
         public string PasswordHash { get; set; } = "";
 
         public string Phone { get; set; } = "";
-        public string Role { get; set; } = ""; 
+        public string Role { get; set; } = "";
+        public bool EmailNotificationsRequested { get; set; } = false;
+        public bool EmailNotificationsConfirmed { get; set; } = false;
 
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 

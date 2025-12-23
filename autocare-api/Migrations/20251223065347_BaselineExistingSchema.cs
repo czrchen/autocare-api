@@ -5,7 +5,7 @@
 namespace autocare_api.Migrations
 {
     /// <inheritdoc />
-    public partial class FixOperatingHours : Migration
+    public partial class BaselineExistingSchema : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)

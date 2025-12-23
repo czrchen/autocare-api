@@ -4,19 +4,14 @@
 
 namespace autocare_api.Migrations
 {
-    /// <inheritdoc />
-    public partial class FixedJsonIssue : Migration
+    public partial class SyncSnapshotOnly : Migration
     {
-        /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
         {
-
         }
 
-        /// <inheritdoc />
         protected override void Down(MigrationBuilder migrationBuilder)
         {
-
         }
     }
 }

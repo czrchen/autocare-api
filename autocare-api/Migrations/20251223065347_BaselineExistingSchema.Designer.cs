@@ -12,8 +12,8 @@ using autocare_api.Data;
 namespace autocare_api.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    [Migration("20251118051822_AddColorPurchaseDate")]
-    partial class AddColorPurchaseDate
+    [Migration("20251223065347_BaselineExistingSchema")]
+    partial class BaselineExistingSchema
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -24,54 +24,6 @@ namespace autocare_api.Migrations
                 .HasAnnotation("Relational:MaxIdentifierLength", 63);
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
-
-            modelBuilder.Entity("autocare_api.Models.Invoice", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid");
-
-                    b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<string>("InvoiceNumber")
-                        .IsRequired()
-                        .HasMaxLength(50)
-                        .HasColumnType("character varying(50)");
-
-                    b.Property<string>("PdfUrl")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.Property<Guid>("ServiceRecordId")
-                        .HasColumnType("uuid");
-
-                    b.Property<decimal>("Subtotal")
-                        .HasColumnType("numeric");
-
-                    b.Property<decimal>("Tax")
-                        .HasColumnType("numeric");
-
-                    b.Property<decimal>("Total")
-                        .HasColumnType("numeric");
-
-                    b.Property<Guid>("UserId")
-                        .HasColumnType("uuid");
-
-                    b.Property<Guid>("WorkshopId")
-                        .HasColumnType("uuid");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("ServiceRecordId")
-                        .IsUnique();
-
-                    b.HasIndex("UserId");
-
-                    b.HasIndex("WorkshopId");
-
-                    b.ToTable("Invoices");
-                });
 
             modelBuilder.Entity("autocare_api.Models.InvoiceImage", b =>
                 {
@@ -99,6 +51,140 @@ namespace autocare_api.Migrations
                         .IsUnique();
 
                     b.ToTable("InvoiceImages");
+                });
+
+            modelBuilder.Entity("autocare_api.Models.Invoices", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("InvoiceNumber")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("PdfUrl")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<decimal>("Subtotal")
+                        .HasColumnType("numeric");
+
+                    b.Property<decimal>("Tax")
+                        .HasColumnType("numeric");
+
+                    b.Property<decimal>("Total")
+                        .HasColumnType("numeric");
+
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("WorkshopId")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("UserId");
+
+                    b.HasIndex("WorkshopId");
+
+                    b.ToTable("Invoices");
+                });
+
+            modelBuilder.Entity("autocare_api.Models.PasswordResetToken", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTime>("ExpiresAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("TokenHash")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<DateTime?>("UsedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("UserId", "ExpiresAt");
+
+                    b.ToTable("PasswordResetTokens");
+                });
+
+            modelBuilder.Entity("autocare_api.Models.Service", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Category")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Description")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<int>("DurationMinutes")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.Property<decimal>("Price")
+                        .HasColumnType("decimal(10,2)");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<DateTime>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid>("WorkshopProfileId")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("WorkshopProfileId");
+
+                    b.ToTable("Services");
+                });
+
+            modelBuilder.Entity("autocare_api.Models.ServiceComponent", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<int>("ComponentType")
+                        .HasColumnType("integer");
+
+                    b.Property<Guid>("ServiceId")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ServiceId");
+
+                    b.ToTable("ServiceComponents");
                 });
 
             modelBuilder.Entity("autocare_api.Models.ServiceItem", b =>
@@ -136,9 +222,6 @@ namespace autocare_api.Migrations
                     b.Property<Guid?>("InvoiceId")
                         .HasColumnType("uuid");
 
-                    b.Property<bool>("IsOcrUsed")
-                        .HasColumnType("boolean");
-
                     b.Property<string>("Remarks")
                         .IsRequired()
                         .HasColumnType("text");
@@ -146,25 +229,36 @@ namespace autocare_api.Migrations
                     b.Property<DateTime>("ServiceDate")
                         .HasColumnType("timestamp with time zone");
 
+                    b.Property<Guid>("ServiceId")
+                        .HasColumnType("uuid");
+
                     b.Property<int>("ServiceMileage")
                         .HasColumnType("integer");
 
-                    b.Property<Guid?>("UserId")
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<Guid>("UserId")
                         .HasColumnType("uuid");
 
                     b.Property<Guid>("VehicleId")
                         .HasColumnType("uuid");
 
-                    b.Property<Guid>("WorkshopId")
+                    b.Property<Guid>("WorkshopProfileId")
                         .HasColumnType("uuid");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("InvoiceId");
+
+                    b.HasIndex("ServiceId");
 
                     b.HasIndex("UserId");
 
                     b.HasIndex("VehicleId");
 
-                    b.HasIndex("WorkshopId");
+                    b.HasIndex("WorkshopProfileId");
 
                     b.ToTable("ServiceRecords");
                 });
@@ -182,6 +276,12 @@ namespace autocare_api.Migrations
                         .IsRequired()
                         .HasColumnType("text");
 
+                    b.Property<bool>("EmailNotificationsConfirmed")
+                        .HasColumnType("boolean");
+
+                    b.Property<bool>("EmailNotificationsRequested")
+                        .HasColumnType("boolean");
+
                     b.Property<string>("FullName")
                         .IsRequired()
                         .HasColumnType("text");
@@ -196,8 +296,7 @@ namespace autocare_api.Migrations
 
                     b.Property<string>("Role")
                         .IsRequired()
-                        .HasMaxLength(20)
-                        .HasColumnType("character varying(20)");
+                        .HasColumnType("text");
 
                     b.HasKey("Id");
 
@@ -250,8 +349,6 @@ namespace autocare_api.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("PlateNumber");
-
                     b.HasIndex("UserId");
 
                     b.ToTable("Vehicles");
@@ -265,24 +362,50 @@ namespace autocare_api.Migrations
 
                     b.Property<string>("Address")
                         .IsRequired()
+                        .HasColumnType("jsonb");
+
+                    b.Property<string>("ApprovalNotes")
                         .HasColumnType("text");
 
-                    b.Property<string>("OperatingHours")
+                    b.Property<string>("ApprovalStatus")
                         .IsRequired()
                         .HasColumnType("text");
 
+                    b.Property<bool>("EmailNotificationsConfirmed")
+                        .HasColumnType("boolean");
+
+                    b.Property<bool>("EmailNotificationsRequested")
+                        .HasColumnType("boolean");
+
+                    b.Property<double?>("Latitude")
+                        .HasColumnType("double precision");
+
+                    b.Property<double?>("Longitude")
+                        .HasColumnType("double precision");
+
+                    b.Property<string>("OperatingHours")
+                        .IsRequired()
+                        .HasColumnType("jsonb");
+
                     b.Property<double>("Rating")
                         .HasColumnType("double precision");
+
+                    b.Property<DateTime?>("ReviewedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid?>("ReviewedByAdminId")
+                        .HasColumnType("uuid");
 
                     b.Property<Guid>("UserId")
                         .HasColumnType("uuid");
 
                     b.Property<string>("WorkshopName")
                         .IsRequired()
-                        .HasMaxLength(100)
-                        .HasColumnType("character varying(100)");
+                        .HasColumnType("text");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("ApprovalStatus");
 
                     b.HasIndex("UserId")
                         .IsUnique();
@@ -290,14 +413,19 @@ namespace autocare_api.Migrations
                     b.ToTable("WorkshopProfiles");
                 });
 
-            modelBuilder.Entity("autocare_api.Models.Invoice", b =>
+            modelBuilder.Entity("autocare_api.Models.InvoiceImage", b =>
                 {
                     b.HasOne("autocare_api.Models.ServiceRecord", "ServiceRecord")
-                        .WithOne("Invoice")
-                        .HasForeignKey("autocare_api.Models.Invoice", "ServiceRecordId")
+                        .WithOne()
+                        .HasForeignKey("autocare_api.Models.InvoiceImage", "ServiceRecordId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
+                    b.Navigation("ServiceRecord");
+                });
+
+            modelBuilder.Entity("autocare_api.Models.Invoices", b =>
+                {
                     b.HasOne("autocare_api.Models.User", "User")
                         .WithMany()
                         .HasForeignKey("UserId")
@@ -310,22 +438,42 @@ namespace autocare_api.Migrations
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
-                    b.Navigation("ServiceRecord");
-
                     b.Navigation("User");
 
                     b.Navigation("Workshop");
                 });
 
-            modelBuilder.Entity("autocare_api.Models.InvoiceImage", b =>
+            modelBuilder.Entity("autocare_api.Models.PasswordResetToken", b =>
                 {
-                    b.HasOne("autocare_api.Models.ServiceRecord", "ServiceRecord")
-                        .WithOne()
-                        .HasForeignKey("autocare_api.Models.InvoiceImage", "ServiceRecordId")
+                    b.HasOne("autocare_api.Models.User", "User")
+                        .WithMany()
+                        .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.Navigation("ServiceRecord");
+                    b.Navigation("User");
+                });
+
+            modelBuilder.Entity("autocare_api.Models.Service", b =>
+                {
+                    b.HasOne("autocare_api.Models.WorkshopProfile", "WorkshopProfile")
+                        .WithMany("Services")
+                        .HasForeignKey("WorkshopProfileId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("WorkshopProfile");
+                });
+
+            modelBuilder.Entity("autocare_api.Models.ServiceComponent", b =>
+                {
+                    b.HasOne("autocare_api.Models.Service", "Service")
+                        .WithMany("Components")
+                        .HasForeignKey("ServiceId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Service");
                 });
 
             modelBuilder.Entity("autocare_api.Models.ServiceItem", b =>
@@ -341,9 +489,21 @@ namespace autocare_api.Migrations
 
             modelBuilder.Entity("autocare_api.Models.ServiceRecord", b =>
                 {
-                    b.HasOne("autocare_api.Models.User", null)
+                    b.HasOne("autocare_api.Models.Invoices", "Invoice")
+                        .WithMany()
+                        .HasForeignKey("InvoiceId");
+
+                    b.HasOne("autocare_api.Models.Service", "Service")
                         .WithMany("ServiceRecords")
-                        .HasForeignKey("UserId");
+                        .HasForeignKey("ServiceId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("autocare_api.Models.User", "User")
+                        .WithMany("ServiceRecords")
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
 
                     b.HasOne("autocare_api.Models.Vehicle", "Vehicle")
                         .WithMany("ServiceRecords")
@@ -351,15 +511,21 @@ namespace autocare_api.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("autocare_api.Models.User", "Workshop")
+                    b.HasOne("autocare_api.Models.WorkshopProfile", "WorkshopProfile")
                         .WithMany()
-                        .HasForeignKey("WorkshopId")
+                        .HasForeignKey("WorkshopProfileId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
+                    b.Navigation("Invoice");
+
+                    b.Navigation("Service");
+
+                    b.Navigation("User");
+
                     b.Navigation("Vehicle");
 
-                    b.Navigation("Workshop");
+                    b.Navigation("WorkshopProfile");
                 });
 
             modelBuilder.Entity("autocare_api.Models.Vehicle", b =>
@@ -384,10 +550,15 @@ namespace autocare_api.Migrations
                     b.Navigation("User");
                 });
 
+            modelBuilder.Entity("autocare_api.Models.Service", b =>
+                {
+                    b.Navigation("Components");
+
+                    b.Navigation("ServiceRecords");
+                });
+
             modelBuilder.Entity("autocare_api.Models.ServiceRecord", b =>
                 {
-                    b.Navigation("Invoice");
-
                     b.Navigation("ServiceItems");
                 });
 
@@ -401,6 +572,11 @@ namespace autocare_api.Migrations
             modelBuilder.Entity("autocare_api.Models.Vehicle", b =>
                 {
                     b.Navigation("ServiceRecords");
+                });
+
+            modelBuilder.Entity("autocare_api.Models.WorkshopProfile", b =>
+                {
+                    b.Navigation("Services");
                 });
 #pragma warning restore 612, 618
         }

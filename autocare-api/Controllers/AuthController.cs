@@ -88,7 +88,9 @@ namespace autocare_api.Controllers
                     FullName = user.FullName,
                     user.Email,
                     user.Phone,
-                    user.Role
+                    user.Role,
+                    user.EmailNotificationsRequested,
+                    user.EmailNotificationsConfirmed
                 }
             });
         }

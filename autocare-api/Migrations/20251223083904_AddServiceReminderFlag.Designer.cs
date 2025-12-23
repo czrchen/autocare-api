@@ -12,8 +12,8 @@ using autocare_api.Data;
 namespace autocare_api.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    [Migration("20251126080241_AddWorkshopApprovalStatus")]
-    partial class AddWorkshopApprovalStatus
+    [Migration("20251223083904_AddServiceReminderFlag")]
+    partial class AddServiceReminderFlag
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -226,6 +226,9 @@ namespace autocare_api.Migrations
                         .IsRequired()
                         .HasColumnType("text");
 
+                    b.Property<bool>("ReminderSent")
+                        .HasColumnType("boolean");
+
                     b.Property<DateTime>("ServiceDate")
                         .HasColumnType("timestamp with time zone");
 
@@ -275,6 +278,12 @@ namespace autocare_api.Migrations
                     b.Property<string>("Email")
                         .IsRequired()
                         .HasColumnType("text");
+
+                    b.Property<bool>("EmailNotificationsConfirmed")
+                        .HasColumnType("boolean");
+
+                    b.Property<bool>("EmailNotificationsRequested")
+                        .HasColumnType("boolean");
 
                     b.Property<string>("FullName")
                         .IsRequired()
@@ -364,6 +373,18 @@ namespace autocare_api.Migrations
                     b.Property<string>("ApprovalStatus")
                         .IsRequired()
                         .HasColumnType("text");
+
+                    b.Property<bool>("EmailNotificationsConfirmed")
+                        .HasColumnType("boolean");
+
+                    b.Property<bool>("EmailNotificationsRequested")
+                        .HasColumnType("boolean");
+
+                    b.Property<double?>("Latitude")
+                        .HasColumnType("double precision");
+
+                    b.Property<double?>("Longitude")
+                        .HasColumnType("double precision");
 
                     b.Property<string>("OperatingHours")
                         .IsRequired()

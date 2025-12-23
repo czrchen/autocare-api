@@ -12,8 +12,8 @@ using autocare_api.Data;
 namespace autocare_api.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    [Migration("20251124120558_AddComponentHealthSystem")]
-    partial class AddComponentHealthSystem
+    [Migration("20251223070454_SyncSnapshotOnly")]
+    partial class SyncSnapshotOnly
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -276,6 +276,12 @@ namespace autocare_api.Migrations
                         .IsRequired()
                         .HasColumnType("text");
 
+                    b.Property<bool>("EmailNotificationsConfirmed")
+                        .HasColumnType("boolean");
+
+                    b.Property<bool>("EmailNotificationsRequested")
+                        .HasColumnType("boolean");
+
                     b.Property<string>("FullName")
                         .IsRequired()
                         .HasColumnType("text");
@@ -358,12 +364,37 @@ namespace autocare_api.Migrations
                         .IsRequired()
                         .HasColumnType("jsonb");
 
+                    b.Property<string>("ApprovalNotes")
+                        .HasColumnType("text");
+
+                    b.Property<string>("ApprovalStatus")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<bool>("EmailNotificationsConfirmed")
+                        .HasColumnType("boolean");
+
+                    b.Property<bool>("EmailNotificationsRequested")
+                        .HasColumnType("boolean");
+
+                    b.Property<double?>("Latitude")
+                        .HasColumnType("double precision");
+
+                    b.Property<double?>("Longitude")
+                        .HasColumnType("double precision");
+
                     b.Property<string>("OperatingHours")
                         .IsRequired()
                         .HasColumnType("jsonb");
 
                     b.Property<double>("Rating")
                         .HasColumnType("double precision");
+
+                    b.Property<DateTime?>("ReviewedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid?>("ReviewedByAdminId")
+                        .HasColumnType("uuid");
 
                     b.Property<Guid>("UserId")
                         .HasColumnType("uuid");
@@ -373,6 +404,8 @@ namespace autocare_api.Migrations
                         .HasColumnType("text");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("ApprovalStatus");
 
                     b.HasIndex("UserId")
                         .IsUnique();

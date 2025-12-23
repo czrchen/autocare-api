@@ -223,6 +223,9 @@ namespace autocare_api.Migrations
                         .IsRequired()
                         .HasColumnType("text");
 
+                    b.Property<bool>("ReminderSent")
+                        .HasColumnType("boolean");
+
                     b.Property<DateTime>("ServiceDate")
                         .HasColumnType("timestamp with time zone");
 
@@ -272,6 +275,12 @@ namespace autocare_api.Migrations
                     b.Property<string>("Email")
                         .IsRequired()
                         .HasColumnType("text");
+
+                    b.Property<bool>("EmailNotificationsConfirmed")
+                        .HasColumnType("boolean");
+
+                    b.Property<bool>("EmailNotificationsRequested")
+                        .HasColumnType("boolean");
 
                     b.Property<string>("FullName")
                         .IsRequired()
@@ -361,6 +370,12 @@ namespace autocare_api.Migrations
                     b.Property<string>("ApprovalStatus")
                         .IsRequired()
                         .HasColumnType("text");
+
+                    b.Property<bool>("EmailNotificationsConfirmed")
+                        .HasColumnType("boolean");
+
+                    b.Property<bool>("EmailNotificationsRequested")
+                        .HasColumnType("boolean");
 
                     b.Property<double?>("Latitude")
                         .HasColumnType("double precision");
