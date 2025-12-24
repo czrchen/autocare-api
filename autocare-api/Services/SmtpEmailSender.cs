@@ -62,6 +62,63 @@ namespace autocare_api.Services
             }
         }
 
+        public async Task SendInvoiceEmailAsync(string toEmail, string invoiceNumber, string pdfFilePath)
+        {
+            var section = _config.GetSection("Email:Smtp");
+            var from = section["From"];
+            var host = section["Host"];
+            var portString = section["Port"];
+            var user = section["User"];
+            var password = section["Password"];
+
+            if (string.IsNullOrWhiteSpace(from) ||
+                string.IsNullOrWhiteSpace(host) ||
+                string.IsNullOrWhiteSpace(portString) ||
+                string.IsNullOrWhiteSpace(user) ||
+                string.IsNullOrWhiteSpace(password))
+            {
+                _logger.LogError("SMTP configuration is missing or incomplete");
+                throw new InvalidOperationException("Email configuration is invalid");
+            }
+
+            if (!File.Exists(pdfFilePath))
+                throw new FileNotFoundException("Invoice PDF not found", pdfFilePath);
+
+            var port = int.Parse(portString);
+
+            using var message = new MailMessage(from, toEmail)
+            {
+                Subject = $"AutoCare+ Invoice {invoiceNumber}",
+                Body = BuildInvoiceEmailBody(invoiceNumber),
+                IsBodyHtml = true
+            };
+
+            // Attach the PDF
+            message.Attachments.Add(new Attachment(pdfFilePath));
+
+            using var client = new SmtpClient(host, port)
+            {
+                Credentials = new NetworkCredential(user, password),
+                EnableSsl = true
+            };
+
+            await client.SendMailAsync(message);
+            _logger.LogInformation("Invoice email sent to {Email} (Invoice {InvoiceNumber})", toEmail, invoiceNumber);
+        }
+
+        private string BuildInvoiceEmailBody(string invoiceNumber)
+        {
+            return $@"
+<html>
+  <body>
+    <p>Hello,</p>
+    <p>Your invoice <b>{invoiceNumber}</b> is attached to this email.</p>
+    <p>Thank you for choosing AutoCare+.</p>
+    <p>Regards,<br/>AutoCare+ Team</p>
+  </body>
+</html>";
+        }
+
         private string BuildEmailBody(string resetLink)
         {
             return $@"

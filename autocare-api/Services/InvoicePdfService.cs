@@ -2,8 +2,8 @@
 using QuestPDF.Infrastructure;
 using QuestPDF.Helpers;
 using autocare_api.Models;
-using autocare_api.Data;            // <-- REQUIRED
-using Microsoft.EntityFrameworkCore; // <-- REQUIRED
+using autocare_api.Data;          
+using Microsoft.EntityFrameworkCore;
 
 namespace autocare_api.Services
 {
@@ -16,7 +16,7 @@ namespace autocare_api.Services
             _context = context;
         }
 
-        public string GeneratePdf(
+        public InvoicePdfResult GeneratePdf(
             Invoices invoice,
             User customer,
             WorkshopProfile workshop,
@@ -37,8 +37,8 @@ namespace autocare_api.Services
             // ================================
             // FILE PATH
             // ================================
-            var filePath = Path.Combine("wwwroot", "invoices", $"{invoice.Id}.pdf");
-            Directory.CreateDirectory(Path.GetDirectoryName(filePath));
+            var physicalPath = Path.Combine("wwwroot", "invoices", $"{invoice.Id}.pdf");
+            Directory.CreateDirectory(Path.GetDirectoryName(physicalPath)!);
 
             // Workshop address values
             string street = workshop.Address.Street ?? "";
@@ -169,9 +169,10 @@ namespace autocare_api.Services
                         .FontColor(Colors.Grey.Darken1);
                 });
             });
+            document.GeneratePdf(physicalPath);
+            var publicUrl = $"/invoices/{invoice.Id}.pdf";
+            return new InvoicePdfResult(publicUrl, physicalPath);
 
-            document.GeneratePdf(filePath);
-            return $"/invoices/{invoice.Id}.pdf";
         }
     }
 }

@@ -14,17 +14,20 @@ namespace autocare_api.Controllers
         private readonly InvoiceNumberGeneratorService _invoiceNumberService;
         private readonly InvoiceCalculatorService _invoiceCalculatorService;
         private readonly InvoicePdfService _pdfService;
+        private readonly IEmailSender _emailSender;
 
         public InvoiceController(
             AppDbContext context,
             InvoiceNumberGeneratorService invoiceNumberService,
             InvoiceCalculatorService invoiceCalculatorService,
-            InvoicePdfService pdfService)
+            InvoicePdfService pdfService,
+            IEmailSender emailSender)
         {
             _context = context;
             _invoiceNumberService = invoiceNumberService;
             _invoiceCalculatorService = invoiceCalculatorService;
             _pdfService = pdfService;
+            _emailSender = emailSender;
         }
 
         // ======================================================
@@ -107,21 +110,25 @@ namespace autocare_api.Controllers
             await _context.SaveChangesAsync();
 
             // 4. Generate PDF (full itemized invoice)
-            var pdfUrl = _pdfService.GeneratePdf(
+            var pdf = _pdfService.GeneratePdf(
                 invoice,
                 customer,
                 workshop,
                 service,
-                serviceRecord,  // <-- ADDED
+                serviceRecord,
                 subtotal,
                 tax,
                 total
             );
 
-            invoice.PdfUrl = pdfUrl;
+            invoice.PdfUrl = pdf.PublicUrl;
             serviceRecord.InvoiceId = invoice.Id;
 
             await _context.SaveChangesAsync();
+            await _emailSender.SendInvoiceEmailAsync(customer.Email, invoice.InvoiceNumber, pdf.PhysicalPath);
+            Console.WriteLine($"Invoice email target: UserId={customer.Id}, Email={customer.Email}");
+            Console.WriteLine($"Invoice pdf path: Exists={System.IO.File.Exists(pdf.PhysicalPath)}, Path={pdf.PhysicalPath}");
+
 
             return Ok(invoice);
         }
