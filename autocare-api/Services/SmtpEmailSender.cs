@@ -93,7 +93,6 @@ namespace autocare_api.Services
                 IsBodyHtml = true
             };
 
-            // Attach the PDF
             message.Attachments.Add(new Attachment(pdfFilePath));
 
             using var client = new SmtpClient(host, port)
@@ -102,8 +101,68 @@ namespace autocare_api.Services
                 EnableSsl = true
             };
 
-            await client.SendMailAsync(message);
-            _logger.LogInformation("Invoice email sent to {Email} (Invoice {InvoiceNumber})", toEmail, invoiceNumber);
+            try
+            {
+                await client.SendMailAsync(message);
+                _logger.LogInformation("Invoice email sent to {Email} (Invoice {InvoiceNumber})", toEmail, invoiceNumber);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Failed to send invoice email to {Email} (Invoice {InvoiceNumber})", toEmail, invoiceNumber);
+                throw;
+            }
+        }
+
+        public async Task SendPlainTextAsync(string toEmail, string subject, string body)
+        {
+            var section = _config.GetSection("Email:Smtp");
+            var from = section["From"];
+            var host = section["Host"];
+            var portString = section["Port"];
+            var user = section["User"];
+            var password = section["Password"];
+
+            if (string.IsNullOrWhiteSpace(from) ||
+                string.IsNullOrWhiteSpace(host) ||
+                string.IsNullOrWhiteSpace(portString) ||
+                string.IsNullOrWhiteSpace(user) ||
+                string.IsNullOrWhiteSpace(password))
+            {
+                _logger.LogError("SMTP configuration is missing or incomplete");
+                throw new InvalidOperationException("Email configuration is invalid");
+            }
+
+            if (string.IsNullOrWhiteSpace(toEmail))
+                throw new ArgumentException("Recipient email is required", nameof(toEmail));
+
+            if (string.IsNullOrWhiteSpace(subject))
+                subject = "AutoCare+ Notification";
+
+            var port = int.Parse(portString);
+
+            using var message = new MailMessage(from, toEmail)
+            {
+                Subject = subject,
+                Body = body ?? string.Empty,
+                IsBodyHtml = false
+            };
+
+            using var client = new SmtpClient(host, port)
+            {
+                Credentials = new NetworkCredential(user, password),
+                EnableSsl = true
+            };
+
+            try
+            {
+                await client.SendMailAsync(message);
+                _logger.LogInformation("Plain text email sent to {Email}", toEmail);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Failed to send plain text email to {Email}", toEmail);
+                throw;
+            }
         }
 
         private string BuildInvoiceEmailBody(string invoiceNumber)

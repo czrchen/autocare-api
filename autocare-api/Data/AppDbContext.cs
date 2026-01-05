@@ -23,6 +23,8 @@ namespace autocare_api.Data
 
         public DbSet<PasswordResetToken> PasswordResetTokens { get; set; }
 
+        public string? ApprovalNotes { get; set; }
+
         protected override void OnModelCreating(ModelBuilder builder)
         {
             base.OnModelCreating(builder);

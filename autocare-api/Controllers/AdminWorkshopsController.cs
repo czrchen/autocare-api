@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 using autocare_api.Data;
 using autocare_api.Dtos.Workshops;
 using autocare_api.Models;
+using autocare_api.Services;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
@@ -16,10 +17,17 @@ namespace autocare_api.Controllers
     public class AdminWorkshopsController : ControllerBase
     {
         private readonly AppDbContext _db;
+        private readonly IEmailSender _emailSender;
+        private readonly ILogger<AdminWorkshopsController> _logger;
 
-        public AdminWorkshopsController(AppDbContext db)
+        public AdminWorkshopsController(
+            AppDbContext db,
+            IEmailSender emailSender,
+            ILogger<AdminWorkshopsController> logger)
         {
             _db = db;
+            _emailSender = emailSender;
+            _logger = logger;
         }
 
         // GET api/admin/workshops?status=pending|approved|rejected
@@ -79,14 +87,10 @@ namespace autocare_api.Controllers
                 .FirstOrDefaultAsync(wp => wp.Id == id);
 
             if (workshop == null)
-            {
                 return NotFound();
-            }
 
             if (workshop.ApprovalStatus == WorkshopApprovalStatus.Approved)
-            {
                 return BadRequest("Workshop already approved");
-            }
 
             var adminId = GetCurrentUserId();
 
@@ -96,6 +100,29 @@ namespace autocare_api.Controllers
             workshop.ReviewedAt = DateTime.UtcNow;
 
             await _db.SaveChangesAsync();
+
+            var toEmail = workshop.User?.Email;
+            if (!string.IsNullOrWhiteSpace(toEmail))
+            {
+                var subject = "AutoCare+ Workshop Application Approved";
+                var notes = (request.Notes ?? "").Trim();
+
+                var body =
+                    $"Hello {workshop.User?.FullName ?? "Workshop Owner"},\n\n" +
+                    $"Your workshop application for \"{workshop.WorkshopName}\" has been approved.\n\n" +
+                    (string.IsNullOrWhiteSpace(notes) ? "" : $"Message from admin:\n{notes}\n\n") +
+                    "AutoCare+";
+
+                try
+                {
+                    await _emailSender.SendPlainTextAsync(toEmail, subject, body);
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogError(ex, "Approve email failed for workshop {WorkshopId} to {Email}", workshop.Id, toEmail);
+                    // Keep approval successful even if email fails
+                }
+            }
 
             return NoContent();
         }
@@ -108,18 +135,14 @@ namespace autocare_api.Controllers
         )
         {
             if (string.IsNullOrWhiteSpace(request.Notes))
-            {
                 return BadRequest("Rejection notes are required");
-            }
 
             var workshop = await _db.WorkshopProfiles
                 .Include(wp => wp.User)
                 .FirstOrDefaultAsync(wp => wp.Id == id);
 
             if (workshop == null)
-            {
                 return NotFound();
-            }
 
             var adminId = GetCurrentUserId();
 
@@ -130,6 +153,29 @@ namespace autocare_api.Controllers
 
             await _db.SaveChangesAsync();
 
+            var toEmail = workshop.User?.Email;
+            if (!string.IsNullOrWhiteSpace(toEmail))
+            {
+                var subject = "AutoCare+ Workshop Application Rejected";
+                var notes = request.Notes.Trim();
+
+                var body =
+                    $"Hello {workshop.User?.FullName ?? "Workshop Owner"},\n\n" +
+                    $"Your workshop application for \"{workshop.WorkshopName}\" has been rejected.\n\n" +
+                    $"Message from admin:\n{notes}\n\n" +
+                    "AutoCare+";
+
+                try
+                {
+                    await _emailSender.SendPlainTextAsync(toEmail, subject, body);
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogError(ex, "Reject email failed for workshop {WorkshopId} to {Email}", workshop.Id, toEmail);
+                    // Keep rejection successful even if email fails
+                }
+            }
+
             return NoContent();
         }
 
@@ -137,9 +183,8 @@ namespace autocare_api.Controllers
         {
             var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
             if (Guid.TryParse(userIdClaim, out var id))
-            {
                 return id;
-            }
+
             return null;
         }
     }

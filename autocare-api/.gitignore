@@ -1,9 +1,30 @@
-﻿{
-  "Logging": {
-    "LogLevel": {
-      "Default": "Information",
-      "Microsoft.AspNetCore": "Warning"
-    }
-  },
-  "AllowedHosts": "*"
-}
+﻿# ASP.NET Core secrets
+appsettings.Development.json
+appsettings.Production.json
+
+# Local overrides
+appsettings.Local.json
+
+# User secrets
+secrets.json
+
+# Environment files
+.env
+.env.*
+
+# Build outputs
+bin/
+obj/
+
+# Visual Studio
+.vs/
+*.user
+*.suo
+
+# Rider / VS Code
+.idea/
+.vscode/
+
+# OS files
+.DS_Store
+Thumbs.db
