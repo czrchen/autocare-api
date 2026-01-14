@@ -1,4 +1,4 @@
-using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.EntityFrameworkCore;
 using autocare_api.Data;
 using autocare_api.Services;
 using Amazon.SimpleNotificationService;
@@ -6,67 +6,88 @@ using Amazon.Extensions.NETCore.Setup;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// AWS config from appsettings.json
+// --------------------
+// AWS configuration
+// --------------------
 builder.Services.AddDefaultAWSOptions(builder.Configuration.GetAWSOptions());
-
-// Register SNS
 builder.Services.AddAWSService<IAmazonSimpleNotificationService>();
 
-// Your existing services
+// --------------------
+// Application services
+// --------------------
 builder.Services.AddScoped<IEmailSender, SmtpEmailSender>();
 builder.Services.AddScoped<IGeocodingService, GeocodingService>();
 
+// --------------------
+// CORS configuration
+// --------------------
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowFrontend", policy =>
     {
-        policy.WithOrigins("http://localhost:3000")
-              .AllowAnyHeader()
-              .AllowAnyMethod()
-              .AllowCredentials();
+        policy.WithOrigins(
+                "http://localhost:3000",
+                "http://3.80.240.231:3000"
+            )
+            .AllowAnyHeader()
+            .AllowAnyMethod()
+            .AllowCredentials();
     });
 });
 
-// Register EF Core + PostgreSQL
+// --------------------
+// Database
+// --------------------
 builder.Services.AddDbContext<AppDbContext>(options =>
-    options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
+    options.UseNpgsql(
+        builder.Configuration.GetConnectionString("DefaultConnection")
+    )
+);
 
-// Add services to the container.
-
+// --------------------
+// Controllers + JSON
+// --------------------
 builder.Services.AddControllers()
     .AddJsonOptions(options =>
     {
         options.JsonSerializerOptions.PropertyNameCaseInsensitive = true;
-        options.JsonSerializerOptions.ReferenceHandler = System.Text.Json.Serialization.ReferenceHandler.IgnoreCycles;
+        options.JsonSerializerOptions.ReferenceHandler =
+            System.Text.Json.Serialization.ReferenceHandler.IgnoreCycles;
     });
-// Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
+
+// --------------------
+// Swagger
+// --------------------
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
+// --------------------
+// Other services
+// --------------------
 builder.Services.AddScoped<InvoiceNumberGeneratorService>();
 builder.Services.AddScoped<InvoiceCalculatorService>();
 builder.Services.AddScoped<InvoicePdfService>();
-builder.Services.AddScoped<IEmailSender, SmtpEmailSender>();
-builder.Services.AddHttpClient<GeocodingService>();
-builder.Services.AddScoped<IGeocodingService, GeocodingService>();
 
 var app = builder.Build();
 
-// Configure the HTTP request pipeline.
+// --------------------
+// HTTP request pipeline
+// --------------------
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
     app.UseSwaggerUI();
 }
 
+// If you want HTTPS later, enable it with a reverse proxy
 // app.UseHttpsRedirection();
 
 app.UseStaticFiles();
 
+// ✅ CORS MUST come before authorization
+app.UseCors("AllowFrontend");
 
 app.UseAuthorization();
-
-app.UseCors("AllowFrontend");
 
 app.MapControllers();
 
